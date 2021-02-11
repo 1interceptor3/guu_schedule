@@ -2,3 +2,6 @@
 /.idea/
 __pycache__/
 *.xlsx
+*.sqlite
+*.sqlite3
+.DS_Store

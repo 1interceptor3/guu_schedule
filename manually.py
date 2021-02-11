@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 import requests
+from db import DataBaseSQLITE
 
 
 # html = requests.request(
@@ -30,6 +31,9 @@ class Guu:
                     '%d0%b8%d1%81%d0%b0%d0%bd%d0%b8%d0%b5-%d1%81%d0%b5%d1%81%d1%81%d0%b8%d0%b9/schedule'
     base_url = 'https://guu.ru'
 
+    # def __init__(self):
+    #     self.db_obj = DataBaseSQLITE()
+
     def download_file(self):
         obj = make_obj(self.link_schedule)
         for i in obj.findAll('span', attrs={'class': 'doc-unit-title'}):
@@ -48,4 +52,5 @@ class Guu:
 
 guu_obj = Guu()
 excel = guu_obj.download_file()
+print(excel)
 print(guu_obj.load_excel(excel))
