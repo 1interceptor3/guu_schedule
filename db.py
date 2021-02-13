@@ -61,12 +61,18 @@ class DataBaseSQLITE:
             return False
 
     def update_years(self, years_list: list):
+        """
+        Функция удаляет прошлые значения и добавляет новые названия курсов (пока что только ОЗФО) в БД
+
+        :param years_list: Список новых названий курсов
+        :return: Список внесенных новых названий курсов, отобранных по определенным правилам
+        """
         if type(years_list) == list:
             # Чистим прошлые значения
             self.cursor.execute('DELETE FROM year;')
             self.conn.commit()
 
-            # Проверяем листы и добавим в БД
+            # Проверяем листы файла и добавим в БД
             output = list()
             for i in years_list:
                 if 'ОЗФО' in i:

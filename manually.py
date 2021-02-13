@@ -54,7 +54,7 @@ class Guu:
                 return file_name
 
     def work_with_excel(self, new: bool, file_name=None):
-        wb = openpyxl.load_workbook(filename=file_name, read_only=True)
+        wb = openpyxl.load_workbook(filename=file_name)
         if new:
             sheets = self.db_obj.update_years(wb.sheetnames)
         else:
@@ -82,11 +82,11 @@ class Guu:
 
             # Перебор строки программ обучения
             # Не видит объединенные ячейки, ИСПРАВИТЬ
+            count = 0
             for i in range(column_index_from_string(program_coordinate[0]) + 1, ws.max_column + 1):
-                if ws.cell(row=int(program_coordinate[1]), column=i).value:
-                    program_list.append(ws.cell(row=int(program_coordinate[1]), column=i).value)
-
-            print(ws.cell(row=6, column=10).value)
+                print(type(ws.cell(row=int(institute_coordinate[1]), column=i)))
+                count += 1
+            print('count =', count)
             print('--------------------')
             break  # Проверяем пока только 1 лист
 
