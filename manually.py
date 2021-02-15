@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import openpyxl
+from openpyxl.worksheet.merge import MergeCell
 from openpyxl.utils import get_column_letter, column_index_from_string
 import requests
 import os
@@ -13,10 +14,20 @@ def make_obj(url):
 
 
 def get_excel_file():
+    """
+    Функция ищет в текущей директории файлы с расширением .xlsx.
+    В приоритете вернет которые не начинаются с символа '~', так как это временные файлы, которые создаются при
+    открытии.
+
+    :return: строка с названием excel файла в текущей директории
+    """
+    memory = None
     for i in os.listdir():
-        if '.xlsx' in i:
+        if '.xlsx' in i and not i.startswith('~'):
             return i
-    return None
+        elif '.xlsx' in i:
+            memory = i
+    return memory
 
 
 class Guu:
@@ -44,6 +55,7 @@ class Guu:
 
     def download_file(self):
         obj = make_obj(self.link_schedule)
+        print('start downloading xlsx file')
         for i in obj.findAll('span', attrs={'class': 'doc-unit-title'}):
             if 'ОЗФО' in i.get_text():
                 relative_path = i.parent.attrs['href']
@@ -51,6 +63,7 @@ class Guu:
                 html_file = requests.request('GET', self.base_url + relative_path)
                 with open(file_name, 'wb') as file:
                     file.write(html_file.content)
+                    print('xlsx file is downloaded')
                 return file_name
 
     def work_with_excel(self, new: bool, file_name=None):
@@ -63,30 +76,43 @@ class Guu:
         # Перебираем листы и выбираем институты
         for sheet in sheets:
             ws = wb[sheet]
-            institute_coordinate, program_coordinate, institute_list, program_list = None, None, list(), list()
+            institute_coordinate, program_coordinate, arrow_coordinate = None, None, None
+            institute_list, program_list = list(), list()
 
             for row in ws.rows:
                 for cell in row:
                     if cell.value == 'ИНСТИТУТ':
                         institute_coordinate = cell.coordinate
                         continue
+                    if cell.value == 'НАПРАВЛЕНИЕ':
+                        arrow_coordinate = cell.coordinate
+                        continue
                     if cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
                         program_coordinate = cell.coordinate
                         continue
-            print('Найденные координаты', institute_coordinate, program_coordinate)
             print('--------------------')
+            print(ws.title)
             # Перебор строки институтов
             for i in range(column_index_from_string(institute_coordinate[0]) + 1, ws.max_column + 1):
                 if ws.cell(row=int(institute_coordinate[1]), column=i).value:
                     institute_list.append(ws.cell(row=int(institute_coordinate[1]), column=i).value)
 
+            print(institute_list)
+            print(len(institute_list))
+
             # Перебор строки программ обучения
-            # Не видит объединенные ячейки, ИСПРАВИТЬ
-            count = 0
-            for i in range(column_index_from_string(program_coordinate[0]) + 1, ws.max_column + 1):
-                print(type(ws.cell(row=int(institute_coordinate[1]), column=i)))
-                count += 1
-            print('count =', count)
+
+            for col in ws.iter_cols(
+                    min_row=int(arrow_coordinate[1]), max_row=int(program_coordinate[1]),
+                    min_col=column_index_from_string('E'), values_only=True):
+                if col[1]:
+                    program_list.append(col[1])
+                else:
+                    program_list.append(col[0])
+
+            print(program_list)
+            print(len(program_list))
+
             print('--------------------')
             break  # Проверяем пока только 1 лист
 

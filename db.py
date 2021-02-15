@@ -96,4 +96,4 @@ class DataBaseSQLITE:
     def close_conn(self):
         self.cursor.close()
         self.conn.close()
-        print('Connection closed')
+        print('db connection closed')
