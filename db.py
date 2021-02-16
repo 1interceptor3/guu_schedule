@@ -21,8 +21,15 @@ class DataBaseSQLITE:
 
     def create_env(self):
         self.cursor.execute('CREATE TABLE year (id integer primary key, number text NOT NULL UNIQUE);')
-        self.cursor.execute('CREATE TABLE institute (id integer primary key, name text NOT NULL UNIQUE);')
-        self.cursor.execute('CREATE TABLE educational_program (id integer primary key, name text NOT NULL UNIQUE);')
+        self.cursor.execute("""
+        CREATE TABLE institute (
+        id integer primary key,
+        year_id integer not null,
+        name text NOT NULL,
+        FOREIGN KEY (year_id) references year(id)
+        );
+        """)
+        self.cursor.execute('CREATE TABLE educational_program (id integer primary key, name text NOT NULL);')
         self.cursor.execute("""
         CREATE TABLE couples (
         id integer primary key,
@@ -49,16 +56,33 @@ class DataBaseSQLITE:
 
     def need_to_update(self):
         last_date = self.last_changes()
-        date_in_db = datetime.date(
-            int(last_date.split('-')[0]), int(last_date.split('-')[1]), int(last_date.split('-')[2])
-        )
-        delta = datetime.date.today() - date_in_db
-        if delta >= datetime.timedelta(days=1):
-            print('Разница => 1 день')
-            return True
+        print(last_date)
+        if last_date:
+            date_in_db = datetime.date(
+                int(last_date.split('-')[0]), int(last_date.split('-')[1]), int(last_date.split('-')[2])
+            )
+            delta = datetime.date.today() - date_in_db
+            if delta >= datetime.timedelta(days=1):
+                print('Разница => 1 день')
+                return True
+            else:
+                print('Ранзница < 1 день')
+                return False
         else:
-            print('Ранзница < 1 день')
-            return False
+            return True
+
+    def delete_years(self):
+        self.cursor.execute('DELETE FROM year;')
+        self.conn.commit()
+        print('years deleted')
+
+    def add_years(self, name):
+        self.cursor.execute(f"INSERT INTO year (number) VALUES ('{name}');")
+        self.conn.commit()
+
+    def add_institute(self, name, year_name):
+        self.cursor.execute(f"INSERT INTO institute(year_id, name) values ((select id from year where number = '{year_name}'), '{name}');")
+        self.conn.commit()
 
     def update_years(self, years_list: list):
         """

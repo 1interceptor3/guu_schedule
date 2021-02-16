@@ -47,11 +47,12 @@ class Guu:
             # Получаем новое название скачанного файла
             self.excel_file_name = self.download_file()
             print('New file', self.excel_file_name)
-            self.work_with_excel(new=True, file_name=self.excel_file_name)
+            # self.work_with_excel(new=True, file_name=self.excel_file_name)
         else:
             self.excel_file_name = get_excel_file()
             print('Old file', self.excel_file_name)
-            self.work_with_excel(new=False, file_name=self.excel_file_name)
+            # self.work_with_excel(new=False, file_name=self.excel_file_name)
+            self.update_from_excel(self.excel_file_name)
 
     def download_file(self):
         obj = make_obj(self.link_schedule)
@@ -65,6 +66,38 @@ class Guu:
                     file.write(html_file.content)
                     print('xlsx file is downloaded')
                 return file_name
+
+    def update_from_excel(self, file_name):
+        wb = openpyxl.load_workbook(filename=file_name)
+        institute, program = dict(), dict()
+        print('------------------')
+
+        self.db_obj.delete_years()
+        for sheet_name in [i for i in wb.sheetnames if 'ОЗФО' in i]:
+            print(sheet_name)
+            self.db_obj.add_years(sheet_name)
+            ws = wb[sheet_name]
+            for row in ws.iter_rows():
+                for cell in row:
+                    if cell.value == 'ИНСТИТУТ':
+                        institute[sheet_name] = row
+                        print('institute added')
+                    elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
+                        program[sheet_name] = row
+                        print('program added')
+
+            if institute:
+                for cell in institute[sheet_name]:
+                    if cell.value and not cell.value == 'ИНСТИТУТ':
+                        print(cell.value)
+                        self.db_obj.add_institute(name=cell.value, year_name=sheet_name)
+
+            print('------------------')
+
+        print(institute)
+        print(program)
+
+
 
     def work_with_excel(self, new: bool, file_name=None):
         wb = openpyxl.load_workbook(filename=file_name)
