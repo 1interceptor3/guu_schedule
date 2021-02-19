@@ -72,32 +72,40 @@ class Guu:
         institute, program = dict(), dict()
         print('------------------')
 
-        self.db_obj.delete_years()
+        # self.db_obj.delete_years()
+        # self.db_obj.delete_institute()
         for sheet_name in [i for i in wb.sheetnames if 'ОЗФО' in i]:
             print(sheet_name)
-            self.db_obj.add_years(sheet_name)
+            # self.db_obj.add_years(sheet_name)
             ws = wb[sheet_name]
             for row in ws.iter_rows():
                 for cell in row:
                     if cell.value == 'ИНСТИТУТ':
-                        institute[sheet_name] = row
-                        print('institute added')
+                        # institute[sheet_name] = row
+                        print('institute coordinate', cell.coordinate)
+                        break
                     elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
-                        program[sheet_name] = row
-                        print('program added')
+                        # program[sheet_name] = row
+                        print('program coordinate', cell.coordinate)
+                        break
 
-            if institute:
-                for cell in institute[sheet_name]:
-                    if cell.value and not cell.value == 'ИНСТИТУТ':
-                        print(cell.value)
-                        self.db_obj.add_institute(name=cell.value, year_name=sheet_name)
+            # if institute:
+            #     for cell in institute[sheet_name]:
+            #         if cell.value and not cell.value == 'ИНСТИТУТ':
+            #             # print(cell.value.replace('\n', ''))
+            #             self.db_obj.add_institute(name=cell.value.replace('\n', ''), year_name=sheet_name)
+            #
+            # if program:
+            #     for cell in program[sheet_name]:
+            #         if cell.value and not cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
+            #             number += 1
+            #             print(number, cell.value.replace('\n', ''))
 
+            print(ws.cell(row=4, column=7).coordinate)
             print('------------------')
 
-        print(institute)
-        print(program)
-
-
+        # print(institute)
+        # print(program)
 
     def work_with_excel(self, new: bool, file_name=None):
         wb = openpyxl.load_workbook(filename=file_name)

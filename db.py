@@ -80,8 +80,16 @@ class DataBaseSQLITE:
         self.cursor.execute(f"INSERT INTO year (number) VALUES ('{name}');")
         self.conn.commit()
 
+    def delete_institute(self):
+        self.cursor.execute('DELETE FROM institute;')
+        self.conn.commit()
+
     def add_institute(self, name, year_name):
-        self.cursor.execute(f"INSERT INTO institute(year_id, name) values ((select id from year where number = '{year_name}'), '{name}');")
+        self.cursor.execute(
+            f"""
+            INSERT INTO institute(year_id, name) values ((select id from year where number = '{year_name}'), '{name}');
+            """
+        )
         self.conn.commit()
 
     def update_years(self, years_list: list):
