@@ -68,8 +68,10 @@ class Guu:
                 return file_name
 
     def update_from_excel(self, file_name):
+        global inst_col, inst_row, prog_row
         wb = openpyxl.load_workbook(filename=file_name)
-        institute, program = dict(), dict()
+        # institute, program = dict(), dict()
+        output = dict()
         print('------------------')
 
         # self.db_obj.delete_years()
@@ -81,31 +83,59 @@ class Guu:
             for row in ws.iter_rows():
                 for cell in row:
                     if cell.value == 'ИНСТИТУТ':
-                        # institute[sheet_name] = row
-                        print('institute coordinate', cell.coordinate)
-                        break
+                        inst_col, inst_row = cell.column, cell.row
                     elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
-                        # program[sheet_name] = row
-                        print('program coordinate', cell.coordinate)
-                        break
+                        prog_row = cell.row
 
-            # if institute:
-            #     for cell in institute[sheet_name]:
-            #         if cell.value and not cell.value == 'ИНСТИТУТ':
-            #             # print(cell.value.replace('\n', ''))
-            #             self.db_obj.add_institute(name=cell.value.replace('\n', ''), year_name=sheet_name)
-            #
-            # if program:
-            #     for cell in program[sheet_name]:
-            #         if cell.value and not cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
-            #             number += 1
-            #             print(number, cell.value.replace('\n', ''))
+            inst_mem = None
+            for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row, values_only=True):
+                if col[0]:
+                    inst_mem = col[0]
+                    if col[2]:
+                        program = col[2]
+                    else:
+                        program = col[1]
+                    # output[sheet_name] = {col[0]: {program, }}
+                    print(sheet_name, col[0], program)
+                elif not col[0] and (col[1] or col[2]):
+                    # memory_set = output[sheet_name][inst_mem].copy()
+                    if col[2]:
+                        program = col[2]
+                    else:
+                        program = col[1]
+                    # memory_set.add(program)
+                    # output[sheet_name][inst_mem] = memory_set
+                    print(sheet_name, inst_mem, program)
+                else:
+                    continue
 
-            print(ws.cell(row=4, column=7).coordinate)
+                        # print('institute:')
+                        # num_inst = 0
+                        # for inst in ws.iter_cols(min_col=cell.column+1, min_row=cell.row, max_row=cell.row):
+                        #     if inst[0].value:
+                        #         num_inst += 1
+                        #         print(num_inst, inst[0].value.replace('\n', ''))
+                        #         print(inst[0])
+                        # break
+                    # elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
+                    #     print('\nprogram:')
+                    #     num_prog = 0
+                    #     for prog in ws.iter_cols(min_col=cell.column+1, min_row=cell.row-1, max_row=cell.row, values_only=True):
+                    #         if prog[0] and prog[1]:
+                    #             num_prog += 1
+                    #             print(num_prog, prog[1])
+                    #         elif not prog[0] and prog[1]:
+                    #             num_prog += 1
+                    #             print(num_prog, prog[1])
+                    #         elif prog[0] and not prog[1]:
+                    #             num_prog += 1
+                    #             print(num_prog, prog[0])
+                    #         else:
+                    #             continue
+                    #     break
+
             print('------------------')
-
-        # print(institute)
-        # print(program)
+        print(output)
 
     def work_with_excel(self, new: bool, file_name=None):
         wb = openpyxl.load_workbook(filename=file_name)

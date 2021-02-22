@@ -29,17 +29,22 @@ class DataBaseSQLITE:
         FOREIGN KEY (year_id) references year(id)
         );
         """)
-        self.cursor.execute('CREATE TABLE educational_program (id integer primary key, name text NOT NULL);')
+        self.cursor.execute("""
+        CREATE TABLE educational_program (
+        id integer primary key,
+        institute_id integer not null,
+        name text NOT NULL,
+        FOREIGN KEY (institute_id) references institute(id)
+        );
+        """)
         self.cursor.execute("""
         CREATE TABLE couples (
         id integer primary key,
-        year_id integer not null,
-        institute_id integer not null,
         educational_program_id integer not null,
         day_of_week text not null,
         time text not null,
-        FOREIGN KEY (year_id) references year(id),
-        FOREIGN KEY (institute_id) references institute(id),
+        teacher text not null,
+        subject text not null,
         FOREIGN KEY (educational_program_id) references educational_program(id)
         );
         """)
