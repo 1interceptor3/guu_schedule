@@ -81,7 +81,7 @@ class DataBaseSQLITE:
         self.conn.commit()
         print('years deleted')
 
-    def add_years(self, name):
+    def add_year(self, name):
         self.cursor.execute(f"INSERT INTO year (number) VALUES ('{name}');")
         self.conn.commit()
 
@@ -95,6 +95,14 @@ class DataBaseSQLITE:
             INSERT INTO institute(year_id, name) values ((select id from year where number = '{year_name}'), '{name}');
             """
         )
+        self.conn.commit()
+
+    def delete_all_data(self):
+        self.cursor.executescript("""
+        DELETE FROM year;
+        DELETE FROM institute;
+        DELETE FROM educational_program;
+        """)
         self.conn.commit()
 
     def update_years(self, years_list: list):

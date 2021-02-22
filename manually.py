@@ -68,18 +68,17 @@ class Guu:
                 return file_name
 
     def update_from_excel(self, file_name):
+        self.db_obj.delete_all_data()
         global inst_col, inst_row, prog_row
         wb = openpyxl.load_workbook(filename=file_name)
-        # institute, program = dict(), dict()
         output = dict()
         print('------------------')
 
-        # self.db_obj.delete_years()
-        # self.db_obj.delete_institute()
         for sheet_name in [i for i in wb.sheetnames if 'ОЗФО' in i]:
             print(sheet_name)
-            # self.db_obj.add_years(sheet_name)
             ws = wb[sheet_name]
+            output[sheet_name] = {}
+
             for row in ws.iter_rows():
                 for cell in row:
                     if cell.value == 'ИНСТИТУТ':
@@ -90,49 +89,26 @@ class Guu:
             inst_mem = None
             for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row, values_only=True):
                 if col[0]:
-                    inst_mem = col[0]
+                    inst_mem = col[0].replace('\n', '').capitalize()
                     if col[2]:
-                        program = col[2]
+                        program = col[2].replace('\n', '').capitalize()
                     else:
-                        program = col[1]
-                    # output[sheet_name] = {col[0]: {program, }}
-                    print(sheet_name, col[0], program)
-                elif not col[0] and (col[1] or col[2]):
-                    # memory_set = output[sheet_name][inst_mem].copy()
-                    if col[2]:
-                        program = col[2]
-                    else:
-                        program = col[1]
-                    # memory_set.add(program)
-                    # output[sheet_name][inst_mem] = memory_set
+                        program = col[1].replace('\n', '').capitalize()
                     print(sheet_name, inst_mem, program)
+
+                    output[sheet_name].update({inst_mem: {program, }})
+
+                elif not col[0] and (col[1] or col[2]):
+                    if col[2]:
+                        program = col[2].replace('\n', '').capitalize()
+                    else:
+                        program = col[1].replace('\n', '').capitalize()
+                    print(sheet_name, inst_mem, program)
+
+                    output[sheet_name][inst_mem].update({program, })
+
                 else:
                     continue
-
-                        # print('institute:')
-                        # num_inst = 0
-                        # for inst in ws.iter_cols(min_col=cell.column+1, min_row=cell.row, max_row=cell.row):
-                        #     if inst[0].value:
-                        #         num_inst += 1
-                        #         print(num_inst, inst[0].value.replace('\n', ''))
-                        #         print(inst[0])
-                        # break
-                    # elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
-                    #     print('\nprogram:')
-                    #     num_prog = 0
-                    #     for prog in ws.iter_cols(min_col=cell.column+1, min_row=cell.row-1, max_row=cell.row, values_only=True):
-                    #         if prog[0] and prog[1]:
-                    #             num_prog += 1
-                    #             print(num_prog, prog[1])
-                    #         elif not prog[0] and prog[1]:
-                    #             num_prog += 1
-                    #             print(num_prog, prog[1])
-                    #         elif prog[0] and not prog[1]:
-                    #             num_prog += 1
-                    #             print(num_prog, prog[0])
-                    #         else:
-                    #             continue
-                    #     break
 
             print('------------------')
         print(output)
