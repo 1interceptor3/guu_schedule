@@ -1,13 +1,19 @@
 from bs4 import BeautifulSoup
 import openpyxl
-from openpyxl.worksheet.merge import MergeCell
-from openpyxl.utils import get_column_letter, column_index_from_string
 import requests
 import os
 from db import DataBaseSQLITE
 
 
 def make_obj(url):
+    """
+    Функция создаёт объект BeautifulSoup на основе URL
+
+    :param url: URL страницы для создание объекта
+    :type url: str
+    :return: BeautifulSoup object
+    :rtype: class BeautifulSoup
+    """
     html = requests.request('GET', url)
     bs_obj = BeautifulSoup(html.text, 'html.parser')
     return bs_obj
@@ -43,11 +49,9 @@ class Guu:
             # Получаем новое название скачанного файла
             self.excel_file_name = self.download_file()
             print('New file', self.excel_file_name)
-            # self.work_with_excel(new=True, file_name=self.excel_file_name)
         else:
             self.excel_file_name = get_excel_file()
             print('Old file', self.excel_file_name)
-            # self.work_with_excel(new=False, file_name=self.excel_file_name)
             self.update_from_excel(self.excel_file_name)
 
     def download_file(self):
@@ -71,13 +75,13 @@ class Guu:
         self.db_obj.delete_all_data()
         global inst_col, inst_row, prog_row
         wb = openpyxl.load_workbook(filename=file_name)
-        output = dict()
+        # output = dict()
         print('------------------')
 
         for sheet_name in [i for i in wb.sheetnames if 'ОЗФО' in i]:
             print(sheet_name)
             ws = wb[sheet_name]
-            output[sheet_name] = {}
+            # output[sheet_name] = {}
             self.db_obj.add_year(sheet_name)
 
             for row in ws.iter_rows():
@@ -95,24 +99,26 @@ class Guu:
                         program = col[2].replace('\n', '').capitalize()
                     else:
                         program = col[1].replace('\n', '').capitalize()
-                    print(sheet_name, inst_mem, program)
+                    # print(sheet_name, inst_mem, program)
+                    # output[sheet_name].update({inst_mem: {program, }})
                     self.db_obj.add_inst_prog(sheet_name, inst_mem, program)
-                    output[sheet_name].update({inst_mem: {program, }})
 
                 elif not col[0] and (col[1] or col[2]):
                     if col[2]:
                         program = col[2].replace('\n', '').capitalize()
                     else:
                         program = col[1].replace('\n', '').capitalize()
-                    print(sheet_name, inst_mem, program)
-                    output[sheet_name][inst_mem].update({program, })
+                    # print(sheet_name, inst_mem, program)
+                    # output[sheet_name][inst_mem].update({program, })
                     self.db_obj.add_prog(sheet_name, inst_mem, program)
 
                 else:
                     continue
 
             print('------------------')
-        print(output)
+
+        # Заносим дату обновления в БД
+        self.db_obj.updated()
 
     def __del__(self):
         self.db_obj.close_conn()

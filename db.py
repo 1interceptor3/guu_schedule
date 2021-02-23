@@ -54,11 +54,9 @@ class DataBaseSQLITE:
     def last_changes(self):
         self.cursor.execute('SELECT * FROM downloaded_file WHERE id = (SELECT MAX(id) from downloaded_file);')
         last = self.cursor.fetchone()
-        print('last', last)
         if last:
-            return last[-1]
-            # date_str = last[-1]
-            # return datetime.date.strftime(date_str, '%Y-%m-%d')
+            date_str = last[-1]
+            return datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
         else:
             return last
 
@@ -66,10 +64,7 @@ class DataBaseSQLITE:
         last_date = self.last_changes()
         print(last_date)
         if last_date:
-            date_in_db = datetime.date(
-                int(last_date.split('-')[0]), int(last_date.split('-')[1]), int(last_date.split('-')[2])
-            )
-            delta = datetime.date.today() - date_in_db
+            delta = datetime.datetime.now() - last_date
             if delta >= datetime.timedelta(days=1):
                 print('Разница => 1 день')
                 return True
@@ -131,6 +126,12 @@ class DataBaseSQLITE:
             for j in i:
                 output.append(j)
         return output
+
+    def updated(self):
+        self.cursor.execute(f"""
+        INSERT INTO downloaded_file (date) VALUES ('{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}');
+        """)
+        self.conn.commit()
 
     def close_conn(self):
         self.cursor.close()
