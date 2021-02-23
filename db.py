@@ -54,8 +54,11 @@ class DataBaseSQLITE:
     def last_changes(self):
         self.cursor.execute('SELECT * FROM downloaded_file WHERE id = (SELECT MAX(id) from downloaded_file);')
         last = self.cursor.fetchone()
+        print('last', last)
         if last:
             return last[-1]
+            # date_str = last[-1]
+            # return datetime.date.strftime(date_str, '%Y-%m-%d')
         else:
             return last
 
@@ -76,17 +79,8 @@ class DataBaseSQLITE:
         else:
             return True
 
-    def delete_years(self):
-        self.cursor.execute('DELETE FROM year;')
-        self.conn.commit()
-        print('years deleted')
-
     def add_year(self, name):
         self.cursor.execute(f"INSERT INTO year (number) VALUES ('{name}');")
-        self.conn.commit()
-
-    def delete_institute(self):
-        self.cursor.execute('DELETE FROM institute;')
         self.conn.commit()
 
     def add_institute(self, name, year_name):
@@ -105,27 +99,30 @@ class DataBaseSQLITE:
         """)
         self.conn.commit()
 
-    def update_years(self, years_list: list):
-        """
-        Функция удаляет прошлые значения и добавляет новые названия курсов (пока что только ОЗФО) в БД
+    def add_inst_prog(self, year, institute, program):
+        self.cursor.executescript(f"""
+        BEGIN TRANSACTION;
+        INSERT INTO institute (year_id, name) VALUES ((SELECT id FROM year WHERE number = '{year}'), '{institute}');
+        INSERT INTO educational_program (institute_id, name) VALUES (
+            (SELECT id FROM institute WHERE name = '{institute}' AND year_id = (
+                SELECT id FROM year WHERE number = '{year}'
+                )
+            ), '{program}'
+        );
+        COMMIT;
+        """)
+        self.conn.commit()
 
-        :param years_list: Список новых названий курсов
-        :return: Список внесенных новых названий курсов, отобранных по определенным правилам
-        """
-        if type(years_list) == list:
-            # Чистим прошлые значения
-            self.cursor.execute('DELETE FROM year;')
-            self.conn.commit()
-
-            # Проверяем листы файла и добавим в БД
-            output = list()
-            for i in years_list:
-                if 'ОЗФО' in i:
-                    self.cursor.execute(f"INSERT INTO year (number) VALUES ('{i}');")
-                    output.append(i)
-            self.conn.commit()
-            print('Years updated')
-            return output
+    def add_prog(self, year, institute, program):
+        self.cursor.executescript(f"""
+        INSERT INTO educational_program (institute_id, name) VALUES (
+            (SELECT id FROM institute WHERE institute.name = '{institute}' AND year_id=(
+                SELECT id FROM year WHERE number = '{year}'
+                )
+            ), '{program}'
+        );
+        """)
+        self.conn.commit()
 
     def get_years(self):
         self.cursor.execute("SELECT number FROM year;")
@@ -134,9 +131,6 @@ class DataBaseSQLITE:
             for j in i:
                 output.append(j)
         return output
-
-    def update_institute(self):
-        return None
 
     def close_conn(self):
         self.cursor.close()

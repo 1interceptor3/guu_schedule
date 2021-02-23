@@ -40,10 +40,6 @@ class Guu:
 
         # Проверка на необходимость обновления файла и на наличие файла
         if self.db_obj.need_to_update() or not get_excel_file():
-            # Если нужно обновление или файла нету, проходим по каталогу и удаляем лишние файлы excel
-            for i in os.listdir():
-                if '.xlsx' in i:
-                    os.remove(i)
             # Получаем новое название скачанного файла
             self.excel_file_name = self.download_file()
             print('New file', self.excel_file_name)
@@ -55,6 +51,10 @@ class Guu:
             self.update_from_excel(self.excel_file_name)
 
     def download_file(self):
+        # Удаляем старый файл
+        for i in os.listdir():
+            if '.xlsx' in i:
+                os.remove(i)
         obj = make_obj(self.link_schedule)
         print('start downloading xlsx file')
         for i in obj.findAll('span', attrs={'class': 'doc-unit-title'}):
@@ -78,6 +78,7 @@ class Guu:
             print(sheet_name)
             ws = wb[sheet_name]
             output[sheet_name] = {}
+            self.db_obj.add_year(sheet_name)
 
             for row in ws.iter_rows():
                 for cell in row:
@@ -95,7 +96,7 @@ class Guu:
                     else:
                         program = col[1].replace('\n', '').capitalize()
                     print(sheet_name, inst_mem, program)
-
+                    self.db_obj.add_inst_prog(sheet_name, inst_mem, program)
                     output[sheet_name].update({inst_mem: {program, }})
 
                 elif not col[0] and (col[1] or col[2]):
@@ -104,66 +105,14 @@ class Guu:
                     else:
                         program = col[1].replace('\n', '').capitalize()
                     print(sheet_name, inst_mem, program)
-
                     output[sheet_name][inst_mem].update({program, })
+                    self.db_obj.add_prog(sheet_name, inst_mem, program)
 
                 else:
                     continue
 
             print('------------------')
         print(output)
-
-    def work_with_excel(self, new: bool, file_name=None):
-        wb = openpyxl.load_workbook(filename=file_name)
-        if new:
-            sheets = self.db_obj.update_years(wb.sheetnames)
-        else:
-            sheets = self.db_obj.get_years()
-
-        # Перебираем листы и выбираем институты
-        for sheet in sheets:
-            ws = wb[sheet]
-            institute_coordinate, program_coordinate, arrow_coordinate = None, None, None
-            institute_list, program_list = list(), list()
-
-            for row in ws.rows:
-                for cell in row:
-                    if cell.value == 'ИНСТИТУТ':
-                        institute_coordinate = cell.coordinate
-                        continue
-                    if cell.value == 'НАПРАВЛЕНИЕ':
-                        arrow_coordinate = cell.coordinate
-                        continue
-                    if cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
-                        program_coordinate = cell.coordinate
-                        continue
-            print('--------------------')
-            print(ws.title)
-            # Перебор строки институтов
-            for i in range(column_index_from_string(institute_coordinate[0]) + 1, ws.max_column + 1):
-                if ws.cell(row=int(institute_coordinate[1]), column=i).value:
-                    institute_list.append(ws.cell(row=int(institute_coordinate[1]), column=i).value)
-
-            print(institute_list)
-            print(len(institute_list))
-
-            # Перебор строки программ обучения
-
-            for col in ws.iter_cols(
-                    min_row=int(arrow_coordinate[1]), max_row=int(program_coordinate[1]),
-                    min_col=column_index_from_string('E'), values_only=True):
-                if col[1]:
-                    program_list.append(col[1])
-                else:
-                    program_list.append(col[0])
-
-            print(program_list)
-            print(len(program_list))
-
-            print('--------------------')
-            break  # Проверяем пока только 1 лист
-
-        wb.close()
 
     def __del__(self):
         self.db_obj.close_conn()
