@@ -91,29 +91,58 @@ class Guu:
                     elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
                         prog_row = cell.row
 
-            inst_mem = None
-            for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row, values_only=True):
-                if col[0]:
-                    inst_mem = col[0].replace('\n', '').capitalize()
-                    if col[2]:
-                        program = col[2].replace('\n', '').capitalize()
-                    else:
-                        program = col[1].replace('\n', '').capitalize()
-                    # print(sheet_name, inst_mem, program)
-                    # output[sheet_name].update({inst_mem: {program, }})
-                    self.db_obj.add_inst_prog(sheet_name, inst_mem, program)
+            # inst_mem = None
+            # for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row):
+            #     if col[0]:
+            #         inst_mem = col[0].replace('\n', '').capitalize()
+            #         if col[2]:
+            #             program = col[2].replace('\n', '').capitalize()
+            #         else:
+            #             program = col[1].replace('\n', '').capitalize()
+            #         # print(sheet_name, inst_mem, program)
+            #         # output[sheet_name].update({inst_mem: {program, }})
+            #         self.db_obj.add_inst_prog(sheet_name, inst_mem, program)
+            #
+            #     elif not col[0] and (col[1] or col[2]):
+            #         if col[2]:
+            #             program = col[2].replace('\n', '').capitalize()
+            #         else:
+            #             program = col[1].replace('\n', '').capitalize()
+            #         # print(sheet_name, inst_mem, program)
+            #         # output[sheet_name][inst_mem].update({program, })
+            #         self.db_obj.add_prog(sheet_name, inst_mem, program)
+            #
+            #     else:
+            #         continue
 
-                elif not col[0] and (col[1] or col[2]):
-                    if col[2]:
-                        program = col[2].replace('\n', '').capitalize()
-                    else:
-                        program = col[1].replace('\n', '').capitalize()
-                    # print(sheet_name, inst_mem, program)
-                    # output[sheet_name][inst_mem].update({program, })
-                    self.db_obj.add_prog(sheet_name, inst_mem, program)
+            # NEW CYCLE
+            institute_memory = None
+            for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row):
+                if col[0].value:
+                    institute_memory = col[0].value.replace('\n', '').capitalize()
 
-                else:
-                    continue
+                    if col[2].value:
+                        program = col[2].value.replace('\n', '').capitalize()
+                        coordinates = col[2].coordinate
+                    else:
+                        program = col[1].value.replace('\n', '').capitalize()
+                        coordinates = col[1].coordinate
+
+                    # print(institute_memory, program, coordinates, sep=' | ')
+                    self.db_obj.add_inst_prog(sheet_name, institute_memory, program, coordinates)
+
+                elif not col[0].value and (col[1].value or col[2].value):
+                    if col[2].value:
+                        program = col[2].value.replace('\n', '').capitalize()
+                        coordinates = col[2].coordinate
+                    else:
+                        program = col[1].value.replace('\n', '').capitalize()
+                        coordinates = col[1].coordinate
+
+                    # print(institute_memory, program, coordinates, sep=' | ')
+                    self.db_obj.add_prog(sheet_name, institute_memory, program, coordinates)
+
+            print(self.db_obj.get_progs_by_year(sheet_name))
 
             print('------------------')
 

@@ -34,6 +34,7 @@ class DataBaseSQLITE:
         id integer primary key,
         institute_id integer not null,
         name text NOT NULL,
+        coordinates text,
         FOREIGN KEY (institute_id) references institute(id)
         );
         """)
@@ -94,27 +95,27 @@ class DataBaseSQLITE:
         """)
         self.conn.commit()
 
-    def add_inst_prog(self, year, institute, program):
+    def add_inst_prog(self, year, institute, program, coordinates):
         self.cursor.executescript(f"""
         BEGIN TRANSACTION;
         INSERT INTO institute (year_id, name) VALUES ((SELECT id FROM year WHERE number = '{year}'), '{institute}');
-        INSERT INTO educational_program (institute_id, name) VALUES (
+        INSERT INTO educational_program (institute_id, name, coordinates) VALUES (
             (SELECT id FROM institute WHERE name = '{institute}' AND year_id = (
                 SELECT id FROM year WHERE number = '{year}'
                 )
-            ), '{program}'
+            ), '{program}', '{coordinates}'
         );
         COMMIT;
         """)
         self.conn.commit()
 
-    def add_prog(self, year, institute, program):
+    def add_prog(self, year, institute, program, coordinates):
         self.cursor.executescript(f"""
-        INSERT INTO educational_program (institute_id, name) VALUES (
+        INSERT INTO educational_program (institute_id, name, coordinates) VALUES (
             (SELECT id FROM institute WHERE institute.name = '{institute}' AND year_id=(
                 SELECT id FROM year WHERE number = '{year}'
                 )
-            ), '{program}'
+            ), '{program}', '{coordinates}'
         );
         """)
         self.conn.commit()
@@ -125,6 +126,17 @@ class DataBaseSQLITE:
         for i in self.cursor.fetchall():
             for j in i:
                 output.append(j)
+        return output
+
+    def get_progs_by_year(self, year):
+        self.cursor.execute(f"""
+        SELECT name, coordinates FROM educational_program WHERE institute_id IN (
+            SELECT id FROM institute WHERE year_id = (select id from year where number = '{year}')
+        );
+        """)
+        output = []
+        for program in self.cursor.fetchall():
+            output.append(program)
         return output
 
     def updated(self):
