@@ -5,7 +5,7 @@ import os
 
 class DataBaseSQLITE:
     """
-    Класс для работы с базой данных
+    Класс для работы с базой данных.
     """
     def __init__(self):
         print('Start working with db')
@@ -20,6 +20,9 @@ class DataBaseSQLITE:
             self.create_env()
 
     def create_env(self):
+        """
+        Метод для создания таблиц в пустой БД.
+        """
         self.cursor.execute('CREATE TABLE year (id integer primary key, number text NOT NULL UNIQUE);')
         self.cursor.execute("""
         CREATE TABLE institute (
@@ -53,6 +56,9 @@ class DataBaseSQLITE:
         self.conn.commit()
 
     def last_changes(self):
+        """
+        Метод возвращает дату последнего обновления БД или None, если записей нет.
+        """
         self.cursor.execute('SELECT * FROM downloaded_file WHERE id = (SELECT MAX(id) from downloaded_file);')
         last = self.cursor.fetchone()
         if last:
@@ -62,6 +68,9 @@ class DataBaseSQLITE:
             return last
 
     def need_to_update(self):
+        """
+        Возвращает значение, нужно ли обновлять БД
+        """
         last_date = self.last_changes()
         print(last_date)
         if last_date:
@@ -140,12 +149,18 @@ class DataBaseSQLITE:
         return output
 
     def updated(self):
+        """
+        Метод для занесения даты обновления в БД
+        """
         self.cursor.execute(f"""
         INSERT INTO downloaded_file (date) VALUES ('{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}');
         """)
         self.conn.commit()
 
     def close_conn(self):
+        """
+        Метод для закрытия соединения с БД
+        """
         self.cursor.close()
         self.conn.close()
         print('db connection closed')
