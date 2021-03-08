@@ -45,6 +45,7 @@ class DataBaseSQLITE:
         CREATE TABLE couples (
         id integer primary key,
         educational_program_id integer not null,
+        number_of_week text not null,
         day_of_week text not null,
         time text not null,
         teacher text not null,
@@ -101,6 +102,7 @@ class DataBaseSQLITE:
         DELETE FROM year;
         DELETE FROM institute;
         DELETE FROM educational_program;
+        DELETE FROM couples;
         """)
         self.conn.commit()
 
@@ -147,6 +149,22 @@ class DataBaseSQLITE:
         for program in self.cursor.fetchall():
             output.append(program)
         return output
+
+    def get_program_by_col(self, year, column):
+        self.cursor.execute(f"""
+        SELECT educational_program.id, educational_program.name FROM educational_program JOIN institute ON
+        educational_program.institute_id = institute.id
+        WHERE institute.year_id=(SELECT id FROM year WHERE number='{year}') AND 
+        educational_program.coordinates='{column}';
+        """)
+        return self.cursor.fetchone()
+
+    def add_couple(self, program_id, number_of_week, day, time, subject):
+        self.cursor.execute(f"""
+        INSERT INTO couples (educational_program_id, number_of_week, day_of_week, time, teacher, subject)
+        VALUES ('{program_id}', '{number_of_week}', '{day}', '{time}', 'nothing', '{subject}');
+        """)
+        self.conn.commit()
 
     def updated(self):
         """

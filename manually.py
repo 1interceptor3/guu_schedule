@@ -100,32 +100,42 @@ class Guu:
                     elif cell.value == 'ОБРАЗОВАТЕЛЬНАЯ ПРОГРАММА':
                         # и по программам
                         prog_row = cell.row
-                        continue
+                        break
 
-                    elif cell.value in days_of_week:
-                        cells_info[cell.value] = {'coordinate': cell.coordinate, 'time': {}}
-
-                        for rng in merged_ranges:
-                            if cell.coordinate in rng:
-                                cells_info[cell.value].update({'range': rng})
-
-                                for i in ws.iter_rows(min_row=rng.min_row, max_row=rng.max_row, min_col=rng.min_col+1,
-                                                      max_col=rng.max_col+1):
-                                    if i[0].value:
-                                        week_odd = ws.cell(row=i[0].row, column=i[0].column + 1)
-                                        week_even = ws.cell(row=i[0].row + 1, column=i[0].column + 1)
-
-                                        cells_info[cell.value]['time'].update(
-                                            {
-                                                i[0].value: {
-                                                    week_odd.value: week_odd.coordinate,
-                                                    week_even.value: week_even.coordinate,
-                                                }
-                                            }
-                                        )
-                                break
-                        continue
-            pprint.pprint(cells_info)
+                    # поиск по дням недели
+            #         elif cell.value in days_of_week:
+            #             cells_info[cell.value] = {'coordinate': cell.coordinate, 'time': {}, }
+            #
+            #             for rng in merged_ranges:
+            #                 if cell.coordinate in rng:
+            #                     cells_info[cell.value].update({'range': rng})
+            #
+            #                     for i in ws.iter_rows(min_row=rng.min_row, max_row=rng.max_row, min_col=rng.min_col+1,
+            #                                           max_col=rng.max_col+1):
+            #                         if i[0].value:
+            #                             week_odd = ws.cell(row=i[0].row, column=i[0].column + 1)
+            #                             for j in ws.iter_cols(min_row=week_odd.row, max_row=week_odd.row,
+            #                                                   min_col=week_odd.column + 1):
+            #                                 if j[0].value:
+            #                                     pass
+            #
+            #                             week_even = ws.cell(row=i[0].row + 1, column=i[0].column + 1)
+            #                             for j in ws.iter_cols(min_row=week_even.row, max_row=week_even.row,
+            #                                                   min_col=week_even.column + 1):
+            #                                 if type(j[0]).__name__ == 'MergedCell':
+            #                                     print(j[0].coordinate)
+            #
+            #                             cells_info[cell.value]['time'].update(
+            #                                 {
+            #                                     i[0].value: {
+            #                                         week_odd.value: week_odd.coordinate,
+            #                                         week_even.value: week_even.coordinate,
+            #                                     }
+            #                                 }
+            #                             )
+            #                     break
+            #             continue
+            # pprint.pprint(cells_info)
 
             # цикл по институтам и программам и добавление в БД
             for col in ws.iter_cols(min_col=inst_col+1, min_row=inst_row, max_row=prog_row):
@@ -134,26 +144,74 @@ class Guu:
 
                     if col[2].value:
                         program = col[2].value.replace('\n', '').capitalize()
-                        coordinates = col[2].coordinate
+                        coordinates = col[2].column
                     else:
                         program = col[1].value.replace('\n', '').capitalize()
-                        coordinates = col[1].coordinate
+                        coordinates = col[1].column
 
                     self.db_obj.add_inst_prog(sheet_name, institute_memory, program, coordinates)
 
                 elif not col[0].value and (col[1].value or col[2].value):
                     if col[2].value:
                         program = col[2].value.replace('\n', '').capitalize()
-                        coordinates = col[2].coordinate
+                        coordinates = col[2].column
                     else:
                         program = col[1].value.replace('\n', '').capitalize()
-                        coordinates = col[1].coordinate
+                        coordinates = col[1].column
 
                     self.db_obj.add_prog(sheet_name, institute_memory, program, coordinates)
 
             # цикл по парам
-            for couple in ws.iter_rows():
-                pass
+            for row in ws.iter_rows():
+                for cell in row:
+                    if cell.value in days_of_week:
+                        cells_info[cell.value] = {'coordinate': cell.coordinate, 'time': {}, }
+                        print('\n', cell.value)
+
+                        for rng in merged_ranges:
+                            if cell.coordinate in rng:
+                                cells_info[cell.value].update({'range': rng, })
+
+                                for time in ws.iter_rows(min_row=rng.min_row, max_row=rng.max_row, min_col=rng.min_col+1,
+                                                         max_col=rng.max_col+1):
+                                    if time[0].value:
+                                        print(time[0].value)
+
+                                        week_odd = ws.cell(row=time[0].row, column=time[0].column + 1)
+                                        for odd_couple in ws.iter_cols(min_row=week_odd.row, max_row=week_odd.row,
+                                                                       min_col=week_odd.column + 1):
+                                            if odd_couple[0].value:
+                                                self.db_obj.add_couple(
+                                                    self.db_obj.get_program_by_col(sheet_name, odd_couple[0].column)[0],
+                                                    week_odd.value,
+                                                    cell.value,
+                                                    time[0].value,
+                                                    odd_couple[0].value.replace('\n', ''),
+                                                )
+
+                                        week_even = ws.cell(row=time[0].row + 1, column=time[0].column + 1)
+
+                                        for even_couple in ws.iter_cols(min_row=week_even.row, max_row=week_even.row,
+                                                                        min_col=week_even.column + 1):
+                                            if even_couple[0].value:
+                                                self.db_obj.add_couple(
+                                                    self.db_obj.get_program_by_col(sheet_name, even_couple[0].column)[0],
+                                                    week_even.value,
+                                                    cell.value,
+                                                    time[0].value,
+                                                    even_couple[0].value.replace('\n', ''),
+                                                )
+                                            elif type(even_couple[0]).__name__ == 'MergedCell':
+                                                top_cell = ws.cell(row=even_couple[0].row - 1,
+                                                                   column=even_couple[0].column)
+                                                if top_cell.value:
+                                                    self.db_obj.add_couple(
+                                                        self.db_obj.get_program_by_col(sheet_name, even_couple[0].column)[0],
+                                                        week_even.value,
+                                                        cell.value,
+                                                        time[0].value,
+                                                        top_cell.value.replace('\n', ''),
+                                                    )
 
             print('------------------')
 
