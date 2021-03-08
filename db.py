@@ -8,13 +8,11 @@ class DataBaseSQLITE:
     Класс для работы с базой данных.
     """
     def __init__(self):
-        print('Start working with db')
         if os.path.exists('guu.sqlite3'):
-            print('DB is exist')
             self.conn = sqlite3.connect('guu.sqlite3')
             self.cursor = self.conn.cursor()
         else:
-            print('Creating new DB file')
+            print('Создание файла с БД')
             self.conn = sqlite3.connect('guu.sqlite3')
             self.cursor = self.conn.cursor()
             self.create_env()
@@ -73,16 +71,17 @@ class DataBaseSQLITE:
         Возвращает значение, нужно ли обновлять БД
         """
         last_date = self.last_changes()
-        print(last_date)
+        print('Дата последнего обновления БД:', last_date)
         if last_date:
             delta = datetime.datetime.now() - last_date
             if delta >= datetime.timedelta(days=1):
-                print('Разница => 1 день')
+                print('БД нужно обновить в связи с датой последнего обновления')
                 return True
             else:
-                print('Ранзница < 1 день')
+                print('БД обновлять не нужно, прошло меньше суток')
                 return False
         else:
+            print('БД нуужно обновить, нет записей о последнем обновлении')
             return True
 
     def add_year(self, name):
@@ -181,4 +180,4 @@ class DataBaseSQLITE:
         """
         self.cursor.close()
         self.conn.close()
-        print('db connection closed')
+        print('Соединение с БД закрыто')
